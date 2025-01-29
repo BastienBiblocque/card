@@ -31,5 +31,11 @@ node main.js
 
 Ce script parcourt toutes les URLs enregistrées dans la base de données et met à jour les informations sur les prix.
 
+```bash
+Ouvrir la DB en CLI 
+
+sqlite3 ./data.db
+```
+
 Truc utile :
 - https://www.zenrows.com/blog/puppeteer-cloudflare-bypass#bypass-with-puppeteer-extra-plugin-stealth
