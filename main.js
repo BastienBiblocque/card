@@ -1,6 +1,9 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const sqlite3 = require('sqlite3').verbose();
+const sendMessagesToAll = require('./webhook.js');
 
+puppeteer.use(StealthPlugin());
 
 // Connexion à la base de données SQLite
 const db = new sqlite3.Database('./data.db', (err) => {
@@ -14,7 +17,7 @@ const db = new sqlite3.Database('./data.db', (err) => {
 // Fonction pour récupérer les URLs et mettre à jour les données
 const updateCardData = async () => {
     // Récupérer les URLs dans la base de données
-    db.all('SELECT id, url, lowest_price FROM cards WHERE url IS NOT NULL', async (err, rows) => {
+    db.all('SELECT id, url, lowest_price, name, language FROM cards WHERE url IS NOT NULL', async (err, rows) => {
         if (err) {
             console.error('Erreur lors de la récupération des URLs:', err.message);
             return;
@@ -25,12 +28,12 @@ const updateCardData = async () => {
             headless: true,  // Assure-toi que le mode headless est activé
             args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--window-size=1280x1024']
         });
-        
+
         for (const row of rows) {
             try {
                 const page = await browser.newPage();
 
-                await page.goto(row.url, { waitUntil: 'load', timeout: 10000 }); 
+                await page.goto(row.url, { waitUntil: 'load', timeout: 10000 });
                 await page.waitForSelector('body > main > div.page-title-container.d-flex.align-items-center.text-break > div.flex-grow-1 > h1', { visible: true, timeout: 10000 });  // Attendre que l'élément avec le prix soit visible
 
 
@@ -47,8 +50,12 @@ const updateCardData = async () => {
                     const newPrice = match[1]; // Le prix se trouve dans le premier groupe de capture
                     console.log('Prix extrait :', newPrice);
                     // Mettre à jour la table avec les nouvelles données
+
                     if (row.lowest_price === null || newPrice < row.lowest_price) {
                         // Mettre à jour lowest_price et recent_price si le prix est plus bas
+
+                        sendMessagesToAll('✅ Baisse de prix pour la carte ' + row.name + ':' + row.language + ' ancien prix : ' + row.lowest_price + '€ nouveau prix : ' + newPrice + '€')
+
                         const updateQuery = `UPDATE cards SET lowest_price = ?, recent_price = ? WHERE id = ?`;
                         db.run(updateQuery, [newPrice, newPrice, row.id], function (err) {
                             if (err) {
@@ -59,6 +66,8 @@ const updateCardData = async () => {
                         });
                     } else {
                         // Si le prix n'est pas plus bas, on met à jour uniquement recent_price
+                        sendMessagesToAll('❌ Pas de baisse de prix pour la carte ' + row.name + ':' + row.language + ' prix actuel : ' + newPrice + '€')
+
                         const updateQuery = `UPDATE cards SET recent_price = ? WHERE id = ?`;
                         db.run(updateQuery, [newPrice, row.id], function (err) {
                             if (err) {
@@ -71,9 +80,6 @@ const updateCardData = async () => {
                 } else {
                     console.log('Prix non trouvé');
                 }
-
-
-
             } catch (err) {
                 console.error('Erreur lors de la récupération des données pour l URL', row.url, ':', err);
             }

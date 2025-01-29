@@ -30,3 +30,6 @@ node main.js
 ```
 
 Ce script parcourt toutes les URLs enregistrées dans la base de données et met à jour les informations sur les prix.
+
+Truc utile :
+- https://www.zenrows.com/blog/puppeteer-cloudflare-bypass#bypass-with-puppeteer-extra-plugin-stealth

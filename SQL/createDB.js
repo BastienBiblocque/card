@@ -22,5 +22,19 @@ const db = new sqlite3.Database('./data.db', (err) => {
             }
             db.close();
         });
+
+            db.run(`CREATE TABLE IF NOT EXISTS webhook (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                server REAL,
+                channel REAL,
+                link TEXT
+            )`, (err) => {
+                if (err) {
+                    console.error('Erreur lors de la création de la table:', err.message);
+                } else {
+                    console.log('Table créée avec succès');
+                }
+                db.close();
+            });
     }
 });
