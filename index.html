@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajout de carte</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        input,
+        button {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+
+<body>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Langue</th>
+                <th>Prix le plus bas</th>
+                <th>Prix récent</th>
+                <th>URL</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="cardsTableBody">
+        </tbody>
+    </table>
+
+    <button onclick="runScript()">Lancer le script</button>
+    <button onclick="clearPrices()">Réinitialiser les prix</button>
+
+
+    <h2>Ajouter une carte</h2>
+    <input type="text" id="name" placeholder="Nom de la carte">
+    <input type="text" id="language" placeholder="Langue">
+    <input type="text" id="url" placeholder="URL">
+    <button onclick="addCard()">Ajouter</button>
+
+    <p id="response"></p>
+
+    <script>
+
+        function clearPrices() {
+            if (confirm('Voulez-vous vraiment réinitialiser tous les prix ?')) {
+                fetch('http://localhost:3000/clear-prices', { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        loadCards(); // Recharge les cartes après suppression des prix
+                    })
+                    .catch(error => alert('Erreur lors de la réinitialisation des prix : ' + error));
+            }
+        }
+
+        function runScript() {
+            fetch('http://localhost:3000/run-script')
+                .then(response => response.text())
+                .then(data => alert(data))
+                .catch(error => alert('Erreur : ' + error));
+        }
+
+        async function addCard() {
+            const name = document.getElementById('name').value;
+            const language = document.getElementById('language').value;
+            const url = document.getElementById('url').value;
+
+            const response = await fetch('http://localhost:3000/add-card', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, language, url })
+            });
+
+            const result = await response.json();
+            document.getElementById('response').innerText = result.message || result.error;
+            loadCards();
+        }
+
+        function loadCards() {
+            fetch('http://localhost:3000/cards')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('cardsTableBody');
+                    tableBody.innerHTML = ''; // Nettoie le tableau
+
+                    data.forEach(card => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${card.id}</td>
+                            <td>${card.name}</td>
+                            <td>${card.language}</td>
+                            <td>${card.lowest_price !== null ? card.lowest_price + ' €' : 'N/A'}</td>
+                            <td>${card.recent_price !== null ? card.recent_price + ' €' : 'N/A'}</td>
+                            <td><a href="${card.url}" target="_blank">Voir</a></td>
+                            <td><button onclick="deleteCard(${card.id})">🗑️</button></td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => alert('Erreur lors du chargement des cartes : ' + error));
+        }
+
+        function deleteCard(id) {
+            if (confirm('Voulez-vous vraiment supprimer cette carte ?')) {
+                fetch(`http://localhost:3000/cards/${id}`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        loadCards(); // Recharge la liste des cartes après suppression
+                    })
+                    .catch(error => alert('Erreur lors de la suppression : ' + error));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCards);
+
+    </script>
+</body>
+
+</html>

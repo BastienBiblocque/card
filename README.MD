@@ -31,8 +31,9 @@ node main.js
 
 Ce script parcourt toutes les URLs enregistrées dans la base de données et met à jour les informations sur les prix.
 
-```bash
 Ouvrir la DB en CLI 
+
+```bash
 
 sqlite3 ./data.db
 ```

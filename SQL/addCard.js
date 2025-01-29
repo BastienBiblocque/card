@@ -1,4 +1,4 @@
-// node SQL/addCard.js --name="Gromago" --language="Anglais" --url="https://www.cardmarket.com/fr/Pokemon/Products/Singles/Prismatic-Evolutions/Gholdengo-ex-PRE164?language=1"
+// node SQL/addCard.js --name="Deckbox Gromago" --language="Francais" --url="https://www.cardmarket.com/fr/Pokemon/Products/Deck-Boxes/Raging-Surf-Gholdengo-Flip-Deck-Box?language=2"
 
 const sqlite3 = require('sqlite3').verbose();
 const minimist = require('minimist');
